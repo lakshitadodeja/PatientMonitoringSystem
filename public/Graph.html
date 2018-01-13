@@ -1,0 +1,49 @@
+<html>
+	<head>	
+	<script type="text/javascript" src="dygraph.js"></script>
+	<link rel="stylesheet" src="dygraph.css"/>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.8.2/firebase.js"></script>
+	<script src="js/index.js"></script>
+	<script src="js/add.js"></script>
+	
+	
+</head>
+<body background="background.jpg">
+    
+<div id="div_g_temp" style="width:300px; height:200px;margin-top:50px"></div>
+    <script type="text/javascript">
+	
+    $(document).ready(function () {
+      var data = [];
+      var g_temp = new Dygraph(document.getElementById("div_g_temp"), data,
+                          {
+                            drawPoints: true,
+                            showRoller: true,
+                          
+                            labels: ['Time', 'Temperature']
+                          });
+      // It sucks that these things aren't objects, and we need to store state in window.
+      window.intervalId = setInterval(function() {
+        var x = new Date();  // current time
+        var data_temp;
+		for(var i=1;i<=10;i++){
+			updateDatabase()
+		}
+		var playersRefss = firebase.database().ref("patient_data/1");
+		playersRefss.on("value", function(data) {
+	    data.forEach(function(data) {
+		  if(data.key == "temperature")
+			data_temp = data.val();
+		  //console.log("The " + data.key + " rating is " + data.val());
+			});
+	    });
+        data.push([x, parseInt(data_temp)]);
+        g_temp.updateOptions( { 'file': data } );
+      }, 30000);
+    }
+);
+</script>
+<!--<script src="js/add1.js"></script>-->
+	</body>
+</html>
