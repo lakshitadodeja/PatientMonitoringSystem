@@ -1,0 +1,46 @@
+<html> 
+    <head>
+        <link href="style.css" rel="stylesheet">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/4.8.2/firebase.js"></script>
+		<script src="js/index.js"></script>
+    </head>
+<body>
+<div class="fixed-top" id="mainNav">
+    <p class="navbar-brand" href="index.html">Patient Monitoring System</p>
+    
+    </div>
+
+<div id="formdiv">
+    <h5>Enter the details of the patient</h5>
+<form id="newpatient" >
+    PID &nbsp; &nbsp;<input style="font-size:15px;" type="text" name="PID" id="PID" disabled></input><br><br>
+    Name &nbsp; <input type="text" style="font-size:15px;" name="Name" id="Name"></input><br><br>
+    Age  &nbsp; &nbsp;<input type="text" style="font-size:15px;" name="Age" id="Age"></input><br><br>
+    Background History<input type="text" style="font-size:15px;" name="History" id="History"></input><br><br>
+    Doctor<input type="text" style="font-size:15px;" name="Doctor" id="Doctor"></input><br><br></form>
+	<button value="Go" style=style="color:#aaa;background-color:#343a40" onclick="addPatient();">Submit</button>
+    <!--<input type="submit" name="submit" style="color:#aaa;background-color:#343a40"  />-->
+    
+</div>
+<script>
+	function addPatient(){
+		var index;
+		var rootRef = firebase.database().ref();
+		var childRef = rootRef.child('patient_details/count');
+		childRef.once("value",function(data){
+			index = data.val();
+			index++;
+			childRef.set(index);
+			var storesRef = rootRef.child('patient_details/'+index);
+			  storesRef.set({
+				"patient_id": index,
+				"patient_name": document.getElementById('Name').value,
+				"patient_age": document.getElementById('Age').value,
+				"background_history": document.getElementById('History').value,
+				"doctor_id":document.getElementById('Doctor').value
+		  });
+		});
+	}
+</script>
+</html>

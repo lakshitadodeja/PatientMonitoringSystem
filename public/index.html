@@ -17,7 +17,7 @@
     </head>
 <body>
 <div class="fixed-top" id="mainNav">
-    <p class="navbar-brand" href="index.html">Patient Monitoring System <span style="float:right;margin-right:10px;padding:5px;"><a id="newp" href="newpatient.html">Add a new patient</a></span></p>
+    <p class="navbar-brand" href="index.html">Patient Monitoring System <span style="float:right;margin-right:40px;padding-bottom:10px;"><a id="newp" href="login/index.html">Log In</span><span style="float:right;margin-right:10px;padding:5px;"><a id="newp" href="newpatient.html">Add a new patient</a></span></p>
     
     </div>
    
@@ -27,11 +27,35 @@
           
             <li class="list_item">Enter the Patient ID</li>
             <li class="list_item"><form><input type="text" id="PID">
-                </input>&nbsp; &nbsp;</form><button value="Go" style="background-color:#aaa;font-size:13px;" onclick="drawGraph() api();">Go</button></li>
-        </ul>
+                </input>&nbsp; &nbsp;</form><button value="Go" style="background-color:#aaa;font-size:13px;" onclick="drawGraph();">Go</button></li>
+        <br>
+		<br>
 		
-        <ul class="list2">
-        </ul>
+		<table id="details" style="display:none;font:Segoe ui" >
+		  <tr >
+			<td style=" padding:5px 5px 5px 10px;background-color:#b2c2bf;color:#343a40">Patient ID</td> 
+			<td id="patientId" style="padding:5px 10px 5px 10px; background-color:#b2c2bf;color:#343a40" ></td> 
+		  </tr>
+		  <tr>
+			<td  style="padding:5px 5px 5px 10px; background-color:#c0ded9;color:#343a40">Patient Name</td> 
+			<td id="patientName" style="padding:5px 10px 5px 10px;background-color:#c0ded9;color:#343a40" ></td> 
+		  </tr>
+		  <tr>
+			<td  style="padding:5px 5px 5px 10px; background-color:#b2c2bf;color:#343a40">Patient Age</td>
+			<td id="patientAge" style="padding:5px 10px 5px 10px; background-color:#b2c2bf;color:#343a40"></td> 
+		  </tr>
+		  <tr>
+			<td  style="padding:5px 5px 5px 10px; background-color:#c0ded9;color:#343a40">Background History</td> 
+			<td id="hist" style="padding:5px 10px 5px 10px;background-color:#c0ded9;color:#343a40"></td> 
+		  </tr>
+		  <tr>
+			<td  style="padding:5px 5px 5px 10px; background-color:#b2c2bf;color:#343a40">Doctor Name</td> 
+			<td id="DID" style="padding:5px 10px 5px 10x; background-color:#b2c2bf;color:#343a40" ></td> 
+		  </tr>
+		</table>
+		
+		</ul>
+		
    
     </div>
 
@@ -42,16 +66,53 @@
 			 <img src="alert.jpg"/>
 			 <img src="care.jpg">
 		 </div>
-		<div id = "div_g_temp" style = "display:none;width:300px; height:200px;margin-top:50px"></div>
-		<div id = "div_g_hb" style = "display:none"></div>
-		<div id = "div_g_bp" style = "display:none"></div>
+        <div id = "div_g_temp" style = "display:none;height: 250px;width: 300px;margin-top: 5px;float:left;margin-left:50px;"></div>
+		<div id = "div_g_hb" style = "display:none;height: 250px;width: 300px;margin-top: 5px;margin-left:465px;"></div>
+		<div id = "div_g_bp" style = "display:none;height:250px;width: 300px;margin-top: 5px;margin-left:50px;float:left"></div>
+         <div id = "div_g_hbp" style = "background_color:green;display:none;height:250px;width: 300px;margin-top: 5px;margin-left:465px;"></div>
     </div>
 </div>
-    <script>
-		function drawGraph(){
+
+    <script type="text/javascript">
+		function drawGraph(){var did;
 			$(document).ready(function () {
+                  
 				  var patient_id = document.getElementById('PID').value;
 				  console.log(patient_id);
+                
+                document.getElementById("patientId").innerHTML=patient_id;
+                var td2=document.getElementById("patientName");
+                var td3=document.getElementById("patientAge");
+                var td4=document.getElementById("hist");
+                var td5=document.getElementById("DID");
+                
+                var playersRefss = firebase.database().ref("patient_details/"+patient_id);
+					playersRefss.on("value", function(data) {
+					data.forEach(function(data) {
+                        console.log(data.key+" "+data.val());
+                        if(data.key=="background_history")
+                            td4.innerHTML=data.val();
+                        if(data.key=="patient_name")
+                            td2.innerHTML=data.val();
+                        if(data.key=="patient_age")
+                            td3.innerHTML=data.val();
+                        if(data.key=="doctor_id")
+                          { did = data.val();
+                            var doc = firebase.database().ref("doctor_details/"+did);
+                            doc.on("value", function(data) {
+                            data.forEach(function(data) {
+                              if(data.key == "doctor_name"){
+                                    td5.innerHTML = data.val();
+                                 }
+					          });
+				            });
+                          }
+						});
+					}); 
+               
+            
+                document.getElementById("details").style.display='block';
+                
 				  var elem = document.getElementById('image_div');
 				  elem.style.display = 'none';
 				  var elem1 = document.getElementById('div_g_temp');
@@ -60,107 +121,71 @@
 				  elem2.style.display = 'block';
 				  var elem3 = document.getElementById('div_g_bp');
 				  elem3.style.display = 'block';
-				  var data = [];
-				  var g_temp = new Dygraph(elem1, data,
+                var elem4 = document.getElementById('div_g_hbp');
+				  elem4.style.display = 'block';
+				  var temp = [], hb=[],bp_low=[],bp_high=[];
+				  var g_temp = new Dygraph(elem1, temp,
 									  {
 										drawPoints: true,
-										showRoller: true,
-									  
-										labels: ['Time', 'Temperature']
+										
+									    title:"Temperature Profile",
+										labels: ['Time', 'Temperature'],
+                      
 									  });
-				  // It sucks that these things aren't objects, and we need to store state in window.
+                var g_hb = new Dygraph(elem2, hb,
+									  {
+										drawPoints: true,
+										
+									    title:"Heartbeat Profile",
+										labels: ['Time', 'Heartbeat']
+									  });
+                var g_bp_low = new Dygraph(elem3, bp_low,
+									  {
+										drawPoints: true,
+									    title:"Low Blood Pressure profile",
+										labels: ['Time', 'Low BP']
+									  });
+                var g_bp_high = new Dygraph(elem4, bp_high,
+									  {
+										drawPoints: true,
+										 title:"High Blood Pressure profile",
+										labels: ['Time', 'High BP']
+									  });
+              
+				  
 				  window.intervalId = setInterval(function() {
 					var x = new Date();  // current time
-					var data_temp;
+					var data_temp,data_hb,data_bp_low,data_bp_high;
 					var playersRefss = firebase.database().ref("patient_data/"+patient_id);
 					playersRefss.on("value", function(data) {
 					data.forEach(function(data) {
 					  if(data.key == "temperature")
 						data_temp = data.val();
-					  console.log("The " + data.key + " rating is " + data.val());
+					  if(data.key=="heartbeat")
+                          data_hb=data.val();
+                    if(data.key=="bp_low")
+                            data_bp_low=data.val();
+                        if(data.key=="bp_high")
+                            data_bp_high=data.val();
+                        console.log(data_temp+" "+data_hb+" "+data_bp_low);
 						});
 					});
-					data.push([x, parseInt(data_temp)]);
-					g_temp.updateOptions( { 'file': data } );
-				  }, 30000);
+					temp.push([x, parseInt(data_temp)]);
+					g_temp.updateOptions( { 'file': temp } );
+                      
+                    hb.push([x, parseInt(data_hb)]);
+					g_hb.updateOptions( { 'file': hb } );
+                      
+                    bp_low.push([x, parseInt(data_bp_low)]);
+					g_bp_low.updateOptions( { 'file': bp_low } );
+                      
+                    bp_high.push([x, parseInt(data_bp_high)]);
+					g_bp_high.updateOptions( { 'file': bp_high } );
+				  }, 1000);
+                
 				}
 			);
 		}
 	</script>
-	<script>
-		function api(){
-		window.intervalId=setInterval(function(){ 
-			var temp,bp_high,bp_low,heartbeat,patient_id;
-			var playersRefss = firebase.database().ref();
-			playersRefss.on("value",function(data){
-			data.forEach(function(data) {
-			 if(data.key=="temperature")
-			 temp=data.val();
-			 if(data.key=="heartbeat")
-			 heartbeat=data.val();
-			if(data.key=="bp_high")
-			 bp_high=data.val();
-			if(data.key=="bp_low")
-			 bp_low=data.val();
-			 if(data.key=="patient_id")
-			 patient_id=data.val();
-			 checkValues(patient_id,temp,bp_high,bp_low,heartbeat);
-			});
-			
-		});	
-		},60000);}
-		function checkValues(patient_name,temp,bp_high,bp_low,heartbeat)
-		{
-			if(temp>=101)
-			{
-				notifyNurse(patient_name);
-			}
-			
-			if(temp>=103)
-			{
-				notifyDoctor(did,patient_name);
-			}
-			if(bp_high>=120)
-			{
-				notifyNurse(patient_name);
-			}
-			if(bp_high>=140)
-			{
-				notifyDoctor(did,patient_name);
-			}
-			if(bp_low<=60)
-			{
-				notifyNurse(patient_name);
-			}
-			if(bp_low<=40)
-			{
-				notifyDoctor(did,patient_name);	
-			}
-			if(heartbeat>=100)
-			{
-				notifyNurse(patient_name);
-			}
-			if(heartbeat>=140)
-			{
-				notifyDoctor(did,patient_name);	
-			}
-		}
-		function notifyDoctor(did,patient_name)
-		{
-			//fetch doctor details from table
-			emailjs.send("lakshita.dodeja@gmail.com", "template_bhUPhkQ1", {"email":doctor_email,"message_html":patient_name});
-			message="http://api.msg91.com/api/sendhttp.php?sender=PaMoAp&route=4&mobiles="+doctor_phone_no+"&authkey=169848A1IDvuQD5991589c&message=Patient "+ patient_name +"in Distress";
-			$.ajax({url:message:,type:"GET"});
-				
-		}
-
-		function notifyNurse(patient_name)
-		{
-			emailjs.send("lakshita.dodeja@gmail.com", "template_bhUPhkQ1", {"email":"deepika.juneja00@gmail.com","message_html":patient_name});
-			message="http://api.msg91.com/api/sendhttp.php?sender=PaMoAp&route=4&mobiles=7404382334&authkey=169848A1IDvuQD5991589c&message=Patient "+ patient_name +"in Distress";
-			$.ajax({url:message:,type:"GET"});
-		}
-		
-	</script>
-    </body>
+	</body>
 </html>

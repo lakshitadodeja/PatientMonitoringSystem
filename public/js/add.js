@@ -1,11 +1,12 @@
- var index = 7;
+ var index = 11;
  var rootRef = firebase.database().ref();
- var storesRef = rootRef.child('doctor_details/'+index);
+ var storesRef = rootRef.child('patient_details/'+index);
   storesRef.set({
-    "doctor_id": "109",
-    "doctor_name": "Lakshita",
-    "phone_number": "9654944485",
-	"email_id":"lakshita.dodeja@gmail.com"
+    "patient_id": "109",
+    "patient_name": "Lakshita",
+    "patient_age": "9654944485",
+	"background_history": ""
+	"doctor_id":"lakshita.dodeja@gmail.com"
   });
 
 /*101,Lakshita,9654944485,lakshita.dodeja@gmail.com

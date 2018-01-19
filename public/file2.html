@@ -1,0 +1,146 @@
+<html>
+<head>
+	<script src="https://code.jquery.com/jquery-3.2.1.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+			<script src="https://www.gstatic.com/firebasejs/4.8.2/firebase.js"></script>
+			<script src="js/index.js"></script>
+	<script type="text/javascript" src="https://cdn.emailjs.com/dist/email.min.js"></script>
+		<script type="text/javascript">
+		   (function(){
+			  emailjs.init("user_5V32Xb4tMB7JqbeQRn2bc");
+		   })();
+		   
+		</script>
+</head>
+<body>
+	<form>
+		<input type="file" name="file" id="file">
+		<br>
+	</form>
+		<button onclick="readFile();">Simulate</button>
+		
+		<script>
+			var patients = new Array();
+			
+			function readFile()
+			{
+				var index = 1;
+				var x=document.getElementById('file').files[0];
+				
+				var reader = new FileReader();
+			    reader.onload = function(progressEvent){
+				var lines = this.result.split('\r\n');
+				var line=0;
+				window.intervalId = setInterval(function() {
+					var count = 0;
+					var index = 1;
+						while(count<10 && (line<lines.length)){
+							var map=lines[line].split(",");
+							  var object={
+									patient_id: map[0],
+									heartbeat: map[1],
+									bp_high: map[2],
+									bp_low: map[3],
+									temperature: map[4]
+									};
+									checkValues(object.patient_id,object.temperature,object.bp_high,object.bp_low,object.heartbeat);
+									var rootRef = firebase.database().ref();
+									var storesRef = rootRef.child('patient_data/'+index);
+									storesRef.set({
+										"patient_id": object.patient_id,
+										"heartbeat": object.heartbeat,
+										"bp_high":  object.bp_high,
+										"bp_low": object.bp_low,
+										"temperature": object.temperature
+								});
+								count++;
+								index++;
+								line++;
+							}
+					}, 1000);
+			  };
+			  reader.readAsText(x);
+			}
+			
+			function notifyDoctor(did,patient_name)
+			{
+				//fetch doctor details from table
+				var d_number,d_emailid;
+				var playersRefss = firebase.database().ref("doctor_details/7");
+					playersRefss.on("value", function(data) {
+					data.forEach(function(data) {
+					  if(data.key == "phone_number")
+							d_number = data.val();
+					   if(data.key == "email_id")
+							d_emailid = data.val();
+					});
+				 });
+				emailjs.send("lakshita_dodeja_gmail_com", "template_bhUPhkQ1", {"email":d_emailid,"message_html":patient_name});
+				var message="http://api.msg91.com/api/sendhttp.php?sender=PaMoAp&route=4&mobiles="+d_number+"&authkey=194037ADg1QY1yZ65a61bba8&message=Patient "+ patient_name +" in Distress";
+				$.ajax({url:message,type:"GET"});
+					
+			}
+		
+			function notifyNurse(patient_name)
+			{
+				emailjs.send("lakshita_dodeja_gmail_com", "template_bhUPhkQ1", {"email":"toshi.varshney1@gmail.com","message_html":patient_name});
+				var message="http://api.msg91.com/api/sendhttp.php?sender=PaMoAp&route=4&mobiles=7206304084&authkey=169848A1IDvuQD5991589c&message=Patient "+ patient_name +"in Distress";
+				$.ajax({url:message,type:"GET"});
+			}
+			
+			function checkValues(patient_id,temp,bp_high,bp_low,heartbeat)
+			{
+				var patient_name,did;
+				var present;
+				var playersRefss = firebase.database().ref("patient_details/"+patient_id);
+					playersRefss.on("value", function(data) {
+					data.forEach(function(data) {
+					  if(data.key == "patient_name")
+							patient_name = data.val();
+					  if(data.key == "doctor_id" )
+							did = data.val();
+					});
+				 });
+				 present = $.inArray(patient_id,patients);
+				if(present == -1)
+				{
+					patients.push(patient_id);
+				
+					if(temp>=100)
+					{	
+						notifyNurse(patient_name);
+					}
+					
+					if(temp>=105)
+					{
+						notifyDoctor(did,patient_name);
+					}
+					if(bp_high>=120)
+					{
+						notifyNurse(patient_name);
+					}
+					if(bp_high>=140)
+					{
+						notifyDoctor(did,patient_name);
+					}
+					if(bp_low<=60)
+					{
+						notifyNurse(patient_name);
+					}
+					if(bp_low<=40)
+					{
+						notifyDoctor(did,patient_name);	
+					}
+					if(heartbeat>=120)
+					{
+						notifyNurse(patient_name);
+					}
+					if(heartbeat>=150)
+					{
+						notifyDoctor(did,patient_name);	
+					}
+				}
+			}
+		</script>
+	</body>
+</html>
